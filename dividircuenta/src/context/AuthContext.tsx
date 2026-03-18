@@ -1,47 +1,54 @@
-import { createContext, useContext, useState } from 'react';
-import { User } from '../types';
+import { createContext, useContext, useState } from "react";
+
+type User = {
+    id?: string;
+    nombre: string;
+    email: string;
+} | null;
 
 type AuthContextType = {
-  user: User;
-  isAllowed: boolean;
-  login: (email: string, password: string) => boolean;
-  logout: () => void;
+    user: User;
+    login: (email: string, password: string) => boolean;
+    register: (nombre: string, email: string, password: string) => boolean;
+    logout: () => void;
 };
 
-// 1. Crear el contexto
+// 1. Definir el contexto
 const AuthContext = createContext<AuthContextType | null>(null);
 
-// 2. Hook personalizado para consumir el contexto
+// 2. Hook personalizado prueba
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth debe usarse dentro de AuthProvider');
-  return context;
+    const context = useContext(AuthContext);
+    if (!context) throw new Error('useAuth debe usarse dentro de AuthProvider');
+    return context;
 };
 
-// 3. Proveedor del contexto
+// 3. Provider
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User>(null);
-  const [isAllowed, setIsAllowed] = useState(false);
+    const [user, setUser] = useState<User>(null);
 
-  // TODO (Supabase): reemplazar por llamada real a supabase.auth.signInWithPassword()
-  const login = (email: string, password: string) => {
-    const allowed = email.endsWith('.edu');
-    if (allowed) {
-      setUser({ email });
-      setIsAllowed(true);
-    }
-    return allowed;
-  };
+    const login = (email: string, password: string) => {
+        if (!email || !password) return false;
+        
+        const nombre = email.split('@')[0]; // Simulación de nombre a partir del email
+        setUser({ nombre , email });
+        return true;
+    };
 
-  const logout = () => {
-    // TODO (Supabase): llamar a supabase.auth.signOut()
-    setUser(null);
-    setIsAllowed(false);
-  };
+    const register = (nombre: string, email: string, password: string) => {
+        if (!nombre || !email || !password) return false;
+       
+        setUser({ nombre, email });
+        return true;
+    };
 
-  return (
-    <AuthContext.Provider value={{ user, isAllowed, login, logout }}>
-      {children}
-    </AuthContext.Provider>
-  );
+    const logout = () => {
+        setUser(null);
+    };
+
+    return (
+        <AuthContext.Provider value={{ user, login, register, logout }}>
+            {children}
+        </AuthContext.Provider>
+    );
 };
