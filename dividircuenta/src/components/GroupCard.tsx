@@ -1,5 +1,5 @@
 import { TouchableOpacity, View, Text, StyleSheet } from "react-native";
-import { Grupo } from "../context/GroupContext";
+import { Grupo } from "../types";
 
 type Props = {
     grupo: Grupo;

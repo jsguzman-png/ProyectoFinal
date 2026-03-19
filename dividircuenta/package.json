@@ -13,11 +13,13 @@
     "@expo/vector-icons": "^15.0.2",
     "@react-navigation/bottom-tabs": "^7.15.5",
     "@react-navigation/native-stack": "^7.14.4",
+    "@reduxjs/toolkit": "^2.11.2",
     "expo": "~55.0.5",
     "expo-status-bar": "~55.0.4",
     "react": "19.2.0",
     "react-native": "^0.83.2",
-    "react-native-safe-area-context": "~5.6.2"
+    "react-native-safe-area-context": "~5.6.2",
+    "react-redux": "^9.2.0"
   },
   "private": true,
   "devDependencies": {

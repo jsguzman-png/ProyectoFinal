@@ -1,10 +1,11 @@
-
 import { useState } from "react";
 import { Text, StyleSheet, Alert } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { GruposStackParamList } from "../navigation/TabsNavigator";
-import { useGroup } from "../context/GroupContext";
+import { useAppDispatch } from "../store/hooks";
+import { agregarGrupo } from "../store/slices/gruposSlice";
+import { Grupo } from "../types";
 import CustomInput     from "../components/CustomInput";
 import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
@@ -15,14 +16,26 @@ export default function CrearGrupoScreen({ navigation }: Props) {
     const [nombre, setNombre] = useState('');
     const [emoji, setEmoji]   = useState('🏖️');
 
-    const { crearGrupo } = useGroup();
+    // 1. instanciar dispatch para poder invocar actions
+    const dispatch = useAppDispatch();
 
     const handleCrear = () => {
         if (!nombre) {
             Alert.alert('Error', 'Escribe un nombre para el grupo');
             return;
         }
-        crearGrupo(nombre, emoji);
+
+        // armar objeto a almacenar
+        const nuevoGrupo: Grupo = {
+            id: Date.now().toString(),
+            nombre,
+            emoji,
+            miembros: [],
+            creadoPor: '',
+        };
+
+        // 2. invocar action "agregarGrupo" enviando nuevoGrupo como payload
+        dispatch(agregarGrupo(nuevoGrupo));
         navigation.goBack();
     };
 

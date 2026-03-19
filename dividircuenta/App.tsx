@@ -1,17 +1,18 @@
 import { NavigationContainer } from '@react-navigation/native';
+import { Provider } from 'react-redux';
 
-import { AuthProvider }  from './src/context/AuthContext';
-import { GroupProvider } from './src/context/GroupContext';
-import StackNavigator    from './src/navigation/StackNavigator';
+import { store }       from './src/store';
+import { AuthProvider } from './src/context/AuthContext';
+import StackNavigator   from './src/navigation/StackNavigator';
 
 export default function App() {
   return (
-    <AuthProvider>
-      <GroupProvider>
+    <Provider store={store}>
+      <AuthProvider>
         <NavigationContainer>
           <StackNavigator />
         </NavigationContainer>
-      </GroupProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </Provider>
   );
 }

@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from "react-native";
-import { Gasto } from "../context/GroupContext";
+import { Gasto } from "../types";
 
 type Props = {
     gasto: Gasto;

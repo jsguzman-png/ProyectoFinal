@@ -3,8 +3,10 @@ import { Text, StyleSheet, Alert } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { GruposStackParamList } from "../navigation/TabsNavigator";
-import { useGroup } from "../context/GroupContext";
-import { useAuth }  from "../context/AuthContext";
+import { useAppDispatch } from "../store/hooks";
+import { agregarGasto } from "../store/slices/gastosSlice";
+import { useAuth } from "../context/AuthContext";
+import { Gasto } from "../types";
 import CustomInput     from "../components/CustomInput";
 import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
@@ -17,15 +19,28 @@ export default function AgregarGastoScreen({ route, navigation }: Props) {
     const [descripcion, setDescripcion] = useState('');
     const [monto, setMonto]             = useState('');
 
-    const { agregarGasto } = useGroup();
-    const { user }         = useAuth();
+    // 1. instanciar dispatch para poder invocar actions
+    const dispatch = useAppDispatch();
+    const { user }  = useAuth();
 
     const handleGuardar = () => {
         if (!descripcion || !monto) {
             Alert.alert('Error', 'Llena todos los campos');
             return;
         }
-        agregarGasto(grupoId, descripcion, parseFloat(monto), user?.nombre ?? 'Tú');
+
+        // armar objeto a almacenar
+        const nuevoGasto: Gasto = {
+            id: Date.now().toString(),
+            grupoId,
+            descripcion,
+            monto: parseFloat(monto),
+            pagadoPor: user?.nombre ?? 'Tú',
+            creadoEn: new Date().toISOString(),
+        };
+
+        // 2. invocar action "agregarGasto" enviando nuevoGasto como payload
+        dispatch(agregarGasto(nuevoGasto));
         navigation.goBack();
     };
 

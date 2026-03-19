@@ -2,7 +2,7 @@ import { FlatList } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { GruposStackParamList } from "../navigation/TabsNavigator";
-import { useGroup } from "../context/GroupContext";
+import { useAppSelector } from "../store/hooks";
 import GroupCard       from "../components/GroupCard";
 import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
@@ -10,7 +10,8 @@ import ScreenContainer from "../components/ScreenContainer";
 type Props = NativeStackScreenProps<GruposStackParamList, 'ListaGrupos'>;
 
 export default function GruposScreen({ navigation }: Props) {
-    const { grupos } = useGroup();
+    // obtener grupos del store (estado global con Redux)
+    const grupos = useAppSelector((state) => state.grupos.grupos);
 
     return (
         <ScreenContainer>
