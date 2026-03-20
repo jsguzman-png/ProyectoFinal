@@ -1,25 +1,32 @@
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { Gasto } from "../types";
 
 type Props = {
     gasto: Gasto;
+    onPress: () => void; // navega a EditarGasto
 };
 
-export default function ExpenseCard({ gasto }: Props) {
+export default function ExpenseCard({ gasto, onPress }: Props) {
     return (
-        <View style={styles.card}>
-            <View>
+        <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.7}>
+            <View style={styles.info}>
                 <Text style={styles.descripcion}>{gasto.descripcion}</Text>
                 <Text style={styles.pagadoPor}>Pagó: {gasto.pagadoPor}</Text>
             </View>
-            <Text style={styles.monto}>L {gasto.monto.toFixed(2)}</Text>
-        </View>
+            <View style={styles.right}>
+                <Text style={styles.monto}>L {gasto.monto.toFixed(2)}</Text>
+                <Text style={styles.editar}>✏️</Text>
+            </View>
+        </TouchableOpacity>
     );
 }
 
 const styles = StyleSheet.create({
-    card:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', padding: 16, borderRadius: 8, marginBottom: 10 },
-    descripcion: { fontSize: 16, fontWeight: '600' },
+    card:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, padding: 14, marginBottom: 8 },
+    info:        { flex: 1 },
+    descripcion: { fontSize: 15, fontWeight: '600', color: '#1a1a1a' },
     pagadoPor:   { fontSize: 13, color: '#888', marginTop: 2 },
-    monto:       { fontSize: 16, fontWeight: 'bold', color: '#2e4566' },
+    right:       { alignItems: 'flex-end', gap: 4 },
+    monto:       { fontSize: 15, fontWeight: 'bold', color: '#2e4566' },
+    editar:      { fontSize: 14 },
 });

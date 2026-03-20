@@ -12,6 +12,7 @@ export type Grupo = {
     emoji: string;
     miembros: string[];
     creadoPor: string;
+    saldado: boolean;
 };
 
 // Tipo para un gasto
@@ -22,4 +23,11 @@ export type Gasto = {
     monto: number;
     pagadoPor: string;
     creadoEn: string;
+};
+
+// tipo para un pago
+export type Pago = {
+    deudor: string;
+    acreedor: string;
+    grupoId: string;
 };
