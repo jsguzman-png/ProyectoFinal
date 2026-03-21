@@ -1,98 +1,74 @@
-import { createContext, useContext, useState } from 'react';
-import { Group, Expense, Balance } from '../types';
+/*import { createContext, useContext, useState } from "react";
 
-type GroupContextType = {
-  groups: Group[];
-  addGroup: (group: Group) => void;
-  deleteGroup: (id: string) => void;
-  expenses: Expense[];
-  addExpense: (expense: Expense) => void;
-  deleteExpense: (id: string) => void;
-  settleExpense: (id: string) => void;
-  getExpensesByGroup: (groupId: string) => Expense[];
-  calculateBalances: (groupId: string) => Balance[];
+export type Gasto = {
+  id: string;
+  descripcion: string;
+  monto: number;
+  pagadoPor: string;
+  grupoId: string;
 };
 
-// 1. Crear el contexto
+export type Grupo = {
+  id: string;
+  nombre: string;
+  emoji: string;
+  miembros: string[];
+};
+
+type GroupContextType = {
+  grupos: Grupo[];
+  gastos: Gasto[];
+  crearGrupo: (nombre: string, emoji: string) => void;
+  agregarGasto: (grupoId: string, descripcion: string, monto: number, pagadoPor: string) => void;
+  getGastosPorGrupo: (grupoId: string) => Gasto[];
+};
+
+// 1. Definir el contexto
 const GroupContext = createContext<GroupContextType | null>(null);
 
 // 2. Hook personalizado
-export const useGroups = () => {
+export const useGroup = () => {
   const context = useContext(GroupContext);
-  if (!context) throw new Error('useGroups debe usarse dentro de GroupProvider');
+  if (!context) throw new Error('useGroup debe usarse dentro de GroupProvider');
   return context;
 };
 
-// 3. Proveedor
+// 3. Provider
 export const GroupProvider = ({ children }: { children: React.ReactNode }) => {
+  const [grupos, setGrupos] = useState<Grupo[]>([
+  ]);
 
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [expenses, setExpenses] = useState<Expense[]>([]);
+  const [gastos, setGastos] = useState<Gasto[]>([
+  ]);
 
-  // --- Grupos ---
-  const addGroup = (group: Group) => {
-    setGroups((prev) => [group, ...prev]);
+  const crearGrupo = (nombre: string, emoji: string) => {
+    const nuevoGrupo: Grupo = {
+      id: Date.now().toString(),
+      nombre,
+      emoji,
+      miembros: ['Tú'],
+    };
+    setGrupos([...grupos, nuevoGrupo]);
   };
 
-  const deleteGroup = (id: string) => {
-    setGroups((prev) => prev.filter((g) => g.id !== id));
-    setExpenses((prev) => prev.filter((e) => e.groupId !== id));
+  const agregarGasto = (grupoId: string, descripcion: string, monto: number, pagadoPor: string) => {
+    const nuevoGasto: Gasto = {
+      id: Date.now().toString(),
+      descripcion,
+      monto,
+      pagadoPor,
+      grupoId,
+    };
+    setGastos([...gastos, nuevoGasto]);
   };
 
-  // --- Gastos ---
-  const addExpense = (expense: Expense) => {
-    setExpenses((prev) => [expense, ...prev]);
-  };
-
-  const deleteExpense = (id: string) => {
-    setExpenses((prev) => prev.filter((e) => e.id !== id));
-  };
-
-  const settleExpense = (id: string) => {
-    setExpenses((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, settled: true } : e))
-    );
-  };
-
-  const getExpensesByGroup = (groupId: string) =>
-    expenses.filter((e) => e.groupId === groupId);
-
-  // --- Cálculo de balances ---
-  const calculateBalances = (groupId: string): Balance[] => {
-    const groupExpenses = getExpensesByGroup(groupId).filter((e) => !e.settled);
-    const group = groups.find((g) => g.id === groupId);
-    if (!group || groupExpenses.length === 0) return [];
-
-    const totalAmount = groupExpenses.reduce((sum, e) => sum + e.amount, 0);
-    const share = totalAmount / group.participants.length;
-
-    return group.participants.map((p) => {
-      const paid = groupExpenses
-        .filter((e) => e.paidBy === p.name)
-        .reduce((sum, e) => sum + e.amount, 0);
-
-      return {
-        participantName: p.name,
-        owes: share - paid,
-      };
-    });
+  const getGastosPorGrupo = (grupoId: string) => {
+    return gastos.filter((g) => g.grupoId === grupoId);
   };
 
   return (
-    <GroupContext.Provider
-      value={{
-        groups,
-        addGroup,
-        deleteGroup,
-        expenses,
-        addExpense,
-        deleteExpense,
-        settleExpense,
-        getExpensesByGroup,
-        calculateBalances,
-      }}
-    >
+    <GroupContext.Provider value={{ grupos, gastos, crearGrupo, agregarGasto, getGastosPorGrupo }}>
       {children}
     </GroupContext.Provider>
   );
-};
+};*/

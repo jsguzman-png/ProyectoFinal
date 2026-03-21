@@ -1,44 +1,71 @@
-
-import { useState } from "react";
-import { Text, StyleSheet, Alert } from "react-native";
+import React, { useState } from "react";
+import { TextInput, Text } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { GruposStackParamList } from "../navigation/TabsNavigator";
-import { useGroup } from "../context/GroupContext";
-import CustomInput     from "../components/CustomInput";
-import CustomButton    from "../components/CustomButton";
+import { useAppDispatch } from "../store/slices/hooks"; 
+import { agregarGrupo, agregarMiembro } from "../store/slices/groupsSlice"; 
+
+import CustomButton from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
 
-type Props = NativeStackScreenProps<GruposStackParamList, 'CrearGrupo'>;
+type Props = NativeStackScreenProps<GruposStackParamList, "CrearGrupo">;
 
 export default function CrearGrupoScreen({ navigation }: Props) {
-    const [nombre, setNombre] = useState('');
-    const [emoji, setEmoji]   = useState('🏖️');
 
-    const { crearGrupo } = useGroup();
+  const dispatch = useAppDispatch();
 
-    const handleCrear = () => {
-        if (!nombre) {
-            Alert.alert('Error', 'Escribe un nombre para el grupo');
-            return;
-        }
-        crearGrupo(nombre, emoji);
-        navigation.goBack();
-    };
+  const [nombre, setNombre] = useState("");
+  const [integrantes, setIntegrantes] = useState("");
 
-    return (
-        <ScreenContainer>
-            <Text style={styles.label}>Nombre del grupo</Text>
-            <CustomInput placeholder="Ej: Viaje a Copán" value={nombre} onChange={setNombre} />
+  const handleCrearGrupo = () => {
+    if (!nombre.trim()) return;
 
-            <Text style={styles.label}>Emoji</Text>
-            <CustomInput placeholder="🏖️" value={emoji} onChange={setEmoji} />
+    // Crear grupo (solo nombre + emoji como pide tu slice)
+    const action = agregarGrupo({
+      nombre: nombre,
+      emoji: "💰",
+    });
 
-            <CustomButton title="Crear Grupo" onClick={handleCrear} />
-        </ScreenContainer>
-    );
+    dispatch(action);
+
+    // obtener el ID generado (porque usas Date.now())
+    const grupoId = action.payload
+      ? Date.now().toString()
+      : "";
+
+    // agregar miembros uno por uno
+    const lista = integrantes.split(",").map(i => i.trim()).filter(Boolean);
+
+    lista.forEach((miembro) => {
+      dispatch(
+        agregarMiembro({
+          grupoId: grupoId,
+          miembro: miembro,
+        })
+      );
+    });
+
+    navigation.goBack();
+  };
+
+  return (
+    <ScreenContainer>
+      <Text>Nombre del grupo</Text>
+      <TextInput
+        placeholder="Ej: Viaje a la playa"
+        value={nombre}
+        onChangeText={setNombre}
+      />
+
+      <Text>Integrantes (separados por coma)</Text>
+      <TextInput
+        placeholder="Ej: Juan, Pedro, Ana"
+        value={integrantes}
+        onChangeText={setIntegrantes}
+      />
+
+      <CustomButton title="Crear Grupo" onClick={handleCrearGrupo} />
+    </ScreenContainer>
+  );
 }
-
-const styles = StyleSheet.create({
-    label: { fontSize: 15, fontWeight: '600', color: '#555', marginBottom: 6 },
-});

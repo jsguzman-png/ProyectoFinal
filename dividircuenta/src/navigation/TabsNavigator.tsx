@@ -17,6 +17,7 @@ export type GruposStackParamList = {
     DetalleGrupo: { grupoId: string; grupoNombre: string };
     CrearGrupo:   undefined;
     AgregarGasto: { grupoId: string };
+    EditarGrupo: { grupoId: string };
 };
 
 const Tab   = createBottomTabNavigator<TabsParamList>();

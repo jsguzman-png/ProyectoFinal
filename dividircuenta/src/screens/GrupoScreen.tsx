@@ -2,7 +2,8 @@ import { FlatList } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { GruposStackParamList } from "../navigation/TabsNavigator";
-import { useGroup } from "../context/GroupContext";
+import { useAppSelector } from "../store/slices/hooks";
+
 import GroupCard       from "../components/GroupCard";
 import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
@@ -10,7 +11,9 @@ import ScreenContainer from "../components/ScreenContainer";
 type Props = NativeStackScreenProps<GruposStackParamList, 'ListaGrupos'>;
 
 export default function GruposScreen({ navigation }: Props) {
-    const { grupos } = useGroup();
+
+    // 🔹 Ahora usamos Redux en lugar de Context
+    const grupos = useAppSelector((state) => state.group.grupos);
 
     return (
         <ScreenContainer>
@@ -27,7 +30,11 @@ export default function GruposScreen({ navigation }: Props) {
                     />
                 )}
             />
-            <CustomButton title="+ Nuevo Grupo" onClick={() => navigation.navigate('CrearGrupo')} />
+
+            <CustomButton 
+                title="+ Nuevo Grupo" 
+                onClick={() => navigation.navigate('CrearGrupo')} 
+            />
         </ScreenContainer>
     );
 }
