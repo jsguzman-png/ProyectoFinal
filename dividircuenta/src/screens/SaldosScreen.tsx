@@ -4,7 +4,7 @@ import { useEffect } from "react";
 
 import { GruposStackParamList } from "../navigation/TabsNavigator";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
-import { marcarSaldado } from "../store/slices/gruposSlice";
+import { marcarSaldadoAsync } from "../store/slices/gruposSlice";  // ← cambio
 import { registrarPago } from "../store/slices/gastosSlice";
 import { cambiarMoneda, setTipoDeCambio } from "../store/slices/monedaSlice";
 import { obtenerTipoDeCambio } from "../services/exchangeService";
@@ -23,7 +23,6 @@ export default function SaldosScreen({ route }: Props) {
 
     const { monedaActual, tipoDeCambio } = useAppSelector((state) => state.moneda);
 
-    // cargar tipo de cambio al entrar a la pantalla
     useEffect(() => {
         const cargarTipoDeCambio = async () => {
             const tasa = await obtenerTipoDeCambio();
@@ -32,7 +31,6 @@ export default function SaldosScreen({ route }: Props) {
         cargarTipoDeCambio();
     }, []);
 
-    // función para convertir montos
     const convertir = (monto: number) => {
         if (monedaActual === 'USD') return (monto * tipoDeCambio).toFixed(2);
         return monto.toFixed(2);
@@ -49,7 +47,6 @@ export default function SaldosScreen({ route }: Props) {
         state.gastos.pagosRealizados.filter((p) => p.grupoId === grupoId)
     );
 
-    // ── lógica de cálculo ─────────────────────────────────────────
     const calcularDeudas = (): Deuda[] => {
         if (!grupo || gastos.length === 0) return [];
 
@@ -86,7 +83,6 @@ export default function SaldosScreen({ route }: Props) {
 
         return deudas;
     };
-    // ─────────────────────────────────────────────────────────────
 
     const deudas      = calcularDeudas();
     const totalGastos = gastos.reduce((sum, g) => sum + g.monto, 0);
@@ -104,15 +100,25 @@ export default function SaldosScreen({ route }: Props) {
                 { text: 'Cancelar', style: 'cancel' },
                 {
                     text: 'Sí, ya pagó',
-                    onPress: () => {
+                    onPress: async () => {                              // ← async
                         dispatch(registrarPago({ deudor, acreedor, grupoId }));
+
                         const pagosActualizados = [...pagosRealizados, { deudor, acreedor, grupoId }];
                         const todosSaldados = deudas.every((d) =>
                             pagosActualizados.some((p) => p.deudor === d.deudor && p.acreedor === d.acreedor)
                         );
+
                         if (todosSaldados) {
-                            dispatch(marcarSaldado(grupoId));
-                            Alert.alert('🎉 ¡Grupo saldado!', 'Todos han pagado sus deudas');
+                            try {
+                                // ← marcarSaldadoAsync en lugar de marcarSaldado
+                                await dispatch(marcarSaldadoAsync({
+                                    grupoId,
+                                    saldado: true,
+                                })).unwrap();
+                                Alert.alert('🎉 ¡Grupo saldado!', 'Todos han pagado sus deudas');
+                            } catch {
+                                Alert.alert('Error', 'No se pudo marcar el grupo como saldado');
+                            }
                         }
                     },
                 },
@@ -219,28 +225,23 @@ export default function SaldosScreen({ route }: Props) {
 
 const styles = StyleSheet.create({
     container:          { flex: 1, backgroundColor: '#f3f4f6', padding: 16 },
-
     resumenCard:        { backgroundColor: '#2e4566', borderRadius: 12, padding: 20, alignItems: 'center', marginBottom: 16 },
     resumenCardSaldado: { backgroundColor: '#2e7d32' },
     saldadoBadge:       { fontSize: 13, fontWeight: '700', color: '#fff', backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 20, marginBottom: 8 },
     resumenTitulo:      { fontSize: 14, color: 'rgba(255,255,255,0.7)', fontWeight: '600' },
     resumenMonto:       { fontSize: 36, fontWeight: '800', color: '#fff', marginTop: 4 },
     resumenSub:         { fontSize: 14, color: 'rgba(255,255,255,0.7)', marginTop: 4 },
-
     toggleRow:          { flexDirection: 'row', backgroundColor: '#e8edf5', borderRadius: 8, padding: 4, marginBottom: 16 },
     toggleBtn:          { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 6 },
     toggleActivo:       { backgroundColor: '#2e4566' },
     toggleText:         { fontSize: 14, fontWeight: '600', color: '#2e4566' },
     toggleTextoActivo:  { color: '#fff' },
-
     sectionLabel:       { fontSize: 13, fontWeight: '700', color: '#555', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8, marginTop: 4 },
-
     miembroCard:        { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#fff', borderRadius: 10, padding: 14, marginBottom: 8 },
     miembroNombre:      { fontSize: 15, fontWeight: '700', color: '#1a1a1a' },
     miembroRight:       { alignItems: 'flex-end' },
     miembroPagado:      { fontSize: 13, color: '#666' },
     miembroBalance:     { fontSize: 14, fontWeight: '700', marginTop: 2 },
-
     deudaCard:          { backgroundColor: '#fff', borderRadius: 10, padding: 14, marginBottom: 8 },
     deudaCardPagada:    { backgroundColor: '#f1f8e9', borderWidth: 1, borderColor: '#a5d6a7' },
     deudaInfo:          { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
@@ -248,13 +249,10 @@ const styles = StyleSheet.create({
     deudaTextoPagado:   { color: '#888' },
     deudaMonto:         { fontSize: 16, fontWeight: '800', color: '#c62828' },
     bold:               { fontWeight: '700' },
-
     pagarBtn:           { backgroundColor: '#2e4566', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
     pagarBtnText:       { color: '#fff', fontWeight: '700', fontSize: 14 },
-
     pagadoBadge:        { backgroundColor: '#c8e6c9', borderRadius: 8, paddingVertical: 8, alignItems: 'center' },
     pagadoBadgeText:    { color: '#2e7d32', fontWeight: '700', fontSize: 14 },
-
     saldadoCard:        { backgroundColor: '#e8f5e9', borderRadius: 10, padding: 16, alignItems: 'center' },
     saldadoText:        { fontSize: 15, fontWeight: '700', color: '#2e7d32' },
 });

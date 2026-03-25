@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, Alert, ScrollView, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, Alert, ScrollView, TouchableOpacity, ActivityIndicator } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { GruposStackParamList } from "../navigation/TabsNavigator";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { editarGasto, eliminarGasto } from "../store/slices/gastosSlice";
+import { editarGastoAsync, eliminarGastoAsync } from "../store/slices/gastosSlice";
 import { Gasto } from "../types";
 import CustomInput     from "../components/CustomInput";
 import CustomButton    from "../components/CustomButton";
@@ -18,7 +18,6 @@ export default function EditarGastoScreen({ route, navigation }: Props) {
     const gasto = useAppSelector((state) =>
         state.gastos.gastos.find((g) => g.id === gastoId)
     );
-
     const grupo = useAppSelector((state) =>
         state.grupos.grupos.find((g) => g.id === grupoId)
     );
@@ -26,10 +25,11 @@ export default function EditarGastoScreen({ route, navigation }: Props) {
     const [descripcion, setDescripcion] = useState(gasto?.descripcion ?? '');
     const [monto, setMonto]             = useState(gasto?.monto.toString() ?? '');
     const [pagadoPor, setPagadoPor]     = useState(gasto?.pagadoPor ?? '');
+    const [loading, setLoading]         = useState(false);
 
     const dispatch = useAppDispatch();
 
-    const handleGuardar = () => {
+    const handleGuardar = async () => {
         if (!descripcion || !monto) {
             Alert.alert('Error', 'Llena todos los campos');
             return;
@@ -39,17 +39,25 @@ export default function EditarGastoScreen({ route, navigation }: Props) {
             return;
         }
 
-        const gastoEditado: Gasto = {
-            id:          gastoId,
-            grupoId,
-            descripcion,
-            monto:       parseFloat(monto),
-            pagadoPor,
-            creadoEn:    gasto?.creadoEn ?? new Date().toISOString(),
-        };
+        setLoading(true);
+        try {
+            const gastoEditado: Gasto = {
+                id:           gastoId,
+                grupoId,
+                descripcion,
+                monto:        parseFloat(monto),
+                pagadoPor,
+                divididoEntre: grupo?.miembros ?? [],
+                creadoEn:     gasto?.creadoEn ?? new Date().toISOString(),
+            };
 
-        dispatch(editarGasto(gastoEditado));
-        navigation.goBack();
+            await dispatch(editarGastoAsync(gastoEditado)).unwrap();
+            navigation.goBack();
+        } catch {
+            Alert.alert('Error', 'No se pudo guardar el gasto');
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleEliminar = () => {
@@ -58,9 +66,16 @@ export default function EditarGastoScreen({ route, navigation }: Props) {
             {
                 text: 'Eliminar',
                 style: 'destructive',
-                onPress: () => {
-                    dispatch(eliminarGasto(gastoId));
-                    navigation.goBack();
+                onPress: async () => {
+                    setLoading(true);
+                    try {
+                        await dispatch(eliminarGastoAsync(gastoId)).unwrap();
+                        navigation.goBack();
+                    } catch {
+                        Alert.alert('Error', 'No se pudo eliminar el gasto');
+                    } finally {
+                        setLoading(false);
+                    }
                 },
             },
         ]);
@@ -92,7 +107,6 @@ export default function EditarGastoScreen({ route, navigation }: Props) {
                     typeInput="number"
                 />
 
-                {/* Selector de quién pagó */}
                 <Text style={styles.label}>¿Quién pagó?</Text>
                 {grupo && grupo.miembros.length > 0 && (
                     <View style={styles.miembrosRow}>
@@ -110,8 +124,13 @@ export default function EditarGastoScreen({ route, navigation }: Props) {
                     </View>
                 )}
 
-                <CustomButton title="Guardar cambios" onClick={handleGuardar} />
-                <CustomButton title="Eliminar gasto" onClick={handleEliminar} color="#b71c1c" />
+                {loading
+                    ? <ActivityIndicator size="large" color="#2e4566" style={{ marginTop: 16 }} />
+                    : <>
+                        <CustomButton title="Guardar cambios" onClick={handleGuardar} />
+                        <CustomButton title="Eliminar gasto"  onClick={handleEliminar} color="#b71c1c" />
+                    </>
+                }
             </ScrollView>
         </ScreenContainer>
     );

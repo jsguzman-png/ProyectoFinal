@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { View, Text, StyleSheet, Alert, TouchableOpacity, ScrollView } from "react-native";
+import { View, Text, StyleSheet, Alert, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { GruposStackParamList } from "../navigation/TabsNavigator";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { editarMiembros, editarGrupo } from "../store/slices/gruposSlice";
+import { editarGrupoAsync, editarMiembrosAsync } from "../store/slices/gruposSlice";
 import CustomInput     from "../components/CustomInput";
 import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
@@ -22,6 +22,7 @@ export default function EditarGrupoScreen({ route, navigation }: Props) {
     const [emoji, setEmoji]          = useState(grupo?.emoji ?? '');
     const [miembros, setMiembros]    = useState<string[]>(grupo?.miembros ?? []);
     const [miembroInput, setMiembro] = useState('');
+    const [loading, setLoading]      = useState(false);
 
     const dispatch = useAppDispatch();
 
@@ -51,23 +52,38 @@ export default function EditarGrupoScreen({ route, navigation }: Props) {
         ]);
     };
 
-    const handleGuardar = () => {
+    const handleGuardar = async () => {
         if (!nombre.trim()) {
             Alert.alert('Error', 'El grupo necesita un nombre');
             return;
         }
-        // actualizar nombre y emoji
-        dispatch(editarGrupo({ id: grupoId, nombre: nombre.trim(), emoji: emoji.trim() || '🏖️' }));
-        // actualizar miembros
-        dispatch(editarMiembros({ grupoId, miembros }));
-        navigation.goBack();
+
+        setLoading(true);
+        try {
+            // Actualizar nombre y emoji
+            await dispatch(editarGrupoAsync({
+                id:     grupoId,
+                nombre: nombre.trim(),
+                emoji:  emoji.trim() || '🏖️',
+            })).unwrap();
+
+            // Actualizar miembros
+            await dispatch(editarMiembrosAsync({
+                grupoId,
+                miembros,
+            })).unwrap();
+
+            navigation.goBack();
+        } catch {
+            Alert.alert('Error', 'No se pudieron guardar los cambios');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <ScreenContainer>
             <ScrollView showsVerticalScrollIndicator={false}>
-
-                {/* Nombre del grupo */}
                 <Text style={styles.label}>Nombre del grupo</Text>
                 <CustomInput
                     placeholder="Nombre del grupo"
@@ -75,7 +91,6 @@ export default function EditarGrupoScreen({ route, navigation }: Props) {
                     onChange={setNombre}
                 />
 
-                {/* Emoji */}
                 <Text style={styles.label}>Emoji</Text>
                 <CustomInput
                     placeholder="🏖️"
@@ -83,7 +98,6 @@ export default function EditarGrupoScreen({ route, navigation }: Props) {
                     onChange={setEmoji}
                 />
 
-                {/* Agregar miembro */}
                 <Text style={styles.label}>Agregar miembro</Text>
                 <View style={styles.inputRow}>
                     <View style={{ flex: 1 }}>
@@ -98,7 +112,6 @@ export default function EditarGrupoScreen({ route, navigation }: Props) {
                     </TouchableOpacity>
                 </View>
 
-                {/* Lista de miembros */}
                 <Text style={styles.label}>Miembros actuales</Text>
                 {miembros.map((m) => (
                     <View key={m} style={styles.miembroCard}>
@@ -112,7 +125,10 @@ export default function EditarGrupoScreen({ route, navigation }: Props) {
                     </View>
                 ))}
 
-                <CustomButton title="Guardar cambios" onClick={handleGuardar} />
+                {loading
+                    ? <ActivityIndicator size="large" color="#2e4566" style={{ marginTop: 16 }} />
+                    : <CustomButton title="Guardar cambios" onClick={handleGuardar} />
+                }
             </ScrollView>
         </ScreenContainer>
     );

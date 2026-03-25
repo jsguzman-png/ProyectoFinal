@@ -1,16 +1,33 @@
 import { Text, StyleSheet, Alert } from "react-native";
 
-import { useAuth }     from "../context/AuthContext";
+import { useAuth }        from "../context/AuthContext";
+import { useAppDispatch } from "../store/hooks";
+import { clearGrupos }    from "../store/slices/gruposSlice";
+import { clearGastos }    from "../store/slices/gastosSlice";
 import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
 
-const PerfilScreen = ({ navigation }: any) => {
+const PerfilScreen = () => {
     const { user, logout } = useAuth();
+    const dispatch = useAppDispatch();
 
     const handleLogout = () => {
         Alert.alert('Cerrar sesión', '¿Estás seguro?', [
             { text: 'Cancelar', style: 'cancel' },
-            { text: 'Salir', onPress: () => { logout(); navigation.replace('Login'); } },
+            {
+                text: 'Salir',
+                style: 'destructive',
+                onPress: async () => {
+                    // 1. Limpiar Redux para que no queden datos del usuario anterior
+                    dispatch(clearGrupos());
+                    dispatch(clearGastos());
+
+                    // 2. Cerrar sesión en Supabase
+                    // El StackNavigator detecta automáticamente que session = null
+                    // y redirige solo al Login, sin necesitar navigation.replace
+                    await logout();
+                },
+            },
         ]);
     };
 

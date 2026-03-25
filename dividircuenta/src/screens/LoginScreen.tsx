@@ -15,12 +15,12 @@ export default function LoginScreen({ navigation }: Props) {
 
     const { login } = useAuth();
 
-    const handleLogin = () => {
-        const ok = login(email, password);
+    const handleLogin = async () => {
+     const ok = await login(email, password);
         if (ok) {
-            navigation.navigate('Tabs');
+        // La navegación se maneja automáticamente por el StackNavigator basado en la sesión
         } else {
-            Alert.alert('Error', 'Llena todos los campos');
+        Alert.alert('Error', 'Credenciales incorrectas');
         }
     };
 

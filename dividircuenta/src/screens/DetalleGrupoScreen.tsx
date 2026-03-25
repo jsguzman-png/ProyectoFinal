@@ -1,9 +1,11 @@
-import { View, Text, StyleSheet, Alert, ScrollView } from "react-native";
+import { useEffect } from "react";
+import { View, Text, StyleSheet, Alert, ScrollView, ActivityIndicator } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { GruposStackParamList } from "../navigation/TabsNavigator";
 import { useAppSelector, useAppDispatch } from "../store/hooks";
-import { eliminarGrupo } from "../store/slices/gruposSlice";
+import { eliminarGrupoAsync } from "../store/slices/gruposSlice";
+import { fetchGastos } from "../store/slices/gastosSlice";
 import ExpenseCard     from "../components/ExpenseCard";
 import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
@@ -13,15 +15,20 @@ type Props = NativeStackScreenProps<GruposStackParamList, 'DetalleGrupo'>;
 export default function DetalleGrupoScreen({ route, navigation }: Props) {
     const { grupoId, grupoNombre } = route.params;
 
-    const gastos = useAppSelector((state) =>
+    const dispatch = useAppDispatch();
+
+    const gastos  = useAppSelector((state) =>
         state.gastos.gastos.filter((g) => g.grupoId === grupoId)
     );
-
-    const grupo = useAppSelector((state) =>
+    const grupo   = useAppSelector((state) =>
         state.grupos.grupos.find((g) => g.id === grupoId)
     );
+    const loading = useAppSelector((state) => state.gastos.loading);
 
-    const dispatch = useAppDispatch();
+    // Cargar gastos desde Supabase al entrar a la pantalla
+    useEffect(() => {
+        dispatch(fetchGastos(grupoId));
+    }, [grupoId]);
 
     const handleEliminarGrupo = () => {
         Alert.alert('Eliminar grupo', '¿Estás seguro?', [
@@ -29,9 +36,13 @@ export default function DetalleGrupoScreen({ route, navigation }: Props) {
             {
                 text: 'Eliminar',
                 style: 'destructive',
-                onPress: () => {
-                    dispatch(eliminarGrupo(grupoId));
-                    navigation.goBack();
+                onPress: async () => {
+                    try {
+                        await dispatch(eliminarGrupoAsync(grupoId)).unwrap();
+                        navigation.goBack();
+                    } catch {
+                        Alert.alert('Error', 'No se pudo eliminar el grupo');
+                    }
                 },
             },
         ]);
@@ -58,7 +69,9 @@ export default function DetalleGrupoScreen({ route, navigation }: Props) {
 
                 {/* Gastos */}
                 <Text style={styles.sectionLabel}>Gastos</Text>
-                {gastos.length === 0 ? (
+                {loading ? (
+                    <ActivityIndicator size="small" color="#2e4566" style={{ marginVertical: 16 }} />
+                ) : gastos.length === 0 ? (
                     <Text style={styles.sinGastos}>Sin gastos aún</Text>
                 ) : (
                     gastos.map((item) => (
@@ -83,13 +96,11 @@ export default function DetalleGrupoScreen({ route, navigation }: Props) {
                     onClick={() => navigation.navigate('Saldos', { grupoId })}
                     color="#243348"
                 />
-               
                 <CustomButton
                     title="Editar Miembros 👥"
                     onClick={() => navigation.navigate('EditarGrupo', { grupoId })}
                     color="#0f1a2e"
                 />
-                
                 <CustomButton
                     title="Eliminar Grupo"
                     onClick={handleEliminarGrupo}

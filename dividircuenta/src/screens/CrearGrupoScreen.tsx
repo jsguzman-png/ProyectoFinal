@@ -1,12 +1,11 @@
 import { useState } from "react";
-import { Text, StyleSheet, Alert, View, TouchableOpacity } from "react-native";
+import { Text, StyleSheet, Alert, View, TouchableOpacity, ActivityIndicator } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { GruposStackParamList } from "../navigation/TabsNavigator";
 import { useAppDispatch } from "../store/hooks";
-import { agregarGrupo } from "../store/slices/gruposSlice";
+import { agregarGrupoAsync } from "../store/slices/gruposSlice";
 import { useAuth } from "../context/AuthContext";
-import { Grupo } from "../types";
 import CustomInput     from "../components/CustomInput";
 import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
@@ -18,8 +17,8 @@ export default function CrearGrupoScreen({ navigation }: Props) {
     const [emoji, setEmoji]          = useState('🏖️');
     const [miembroInput, setMiembro] = useState('');
     const [miembros, setMiembros]    = useState<string[]>([]);
+    const [loading, setLoading]      = useState(false);
 
-    // 1. instanciar dispatch
     const dispatch = useAppDispatch();
     const { user } = useAuth();
 
@@ -38,28 +37,36 @@ export default function CrearGrupoScreen({ navigation }: Props) {
         setMiembros(miembros.filter((m) => m !== nombre));
     };
 
-    const handleCrear = () => {
+    const handleCrear = async () => {
         if (!nombre) {
             Alert.alert('Error', 'Escribe un nombre para el grupo');
             return;
         }
+        if (!user?.id) {
+            Alert.alert('Error', 'No hay sesión activa');
+            return;
+        }
 
-        // el usuario actual se agrega automáticamente
-        const todosLosMiembros = [user?.nombre ?? 'Tú', ...miembros];
+        setLoading(true);
+        try {
+            const todosLosMiembros = [user.nombre ?? 'Tú', ...miembros];
 
-        // armar objeto a almacenar
-        const nuevoGrupo: Grupo = {
-            id: Date.now().toString(),
-            nombre,
-            emoji,
-            miembros: todosLosMiembros,
-            creadoPor: user?.nombre ?? 'Tú',
-            saldado: false
-        };
+            await dispatch(agregarGrupoAsync({
+                grupo: {
+                    nombre,
+                    emoji,
+                    miembros: todosLosMiembros,
+                    saldado: false,
+                },
+                userId: user.id,
+            })).unwrap();
 
-        // 2. invocar action agregarGrupo con nuevoGrupo como payload
-        dispatch(agregarGrupo(nuevoGrupo));
-        navigation.goBack();
+            navigation.goBack();
+        } catch (error) {
+            Alert.alert('Error', 'No se pudo crear el grupo');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -84,7 +91,6 @@ export default function CrearGrupoScreen({ navigation }: Props) {
                 </TouchableOpacity>
             </View>
 
-            {/* chips de miembros agregados */}
             {miembros.length > 0 && (
                 <View style={styles.miembrosContainer}>
                     {miembros.map((m) => (
@@ -100,7 +106,10 @@ export default function CrearGrupoScreen({ navigation }: Props) {
 
             <Text style={styles.nota}>* Tú eres agregado automáticamente al grupo</Text>
 
-            <CustomButton title="Crear Grupo" onClick={handleCrear} />
+            {loading
+                ? <ActivityIndicator size="large" color="#2e4566" style={{ marginTop: 16 }} />
+                : <CustomButton title="Crear Grupo" onClick={handleCrear} />
+            }
         </ScreenContainer>
     );
 }

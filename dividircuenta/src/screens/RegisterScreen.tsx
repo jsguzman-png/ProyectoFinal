@@ -16,14 +16,19 @@ export default function RegisterScreen({ navigation }: Props) {
 
     const { register } = useAuth();
 
-    const handleRegister = () => {
-        const ok = register(nombre, email, password);
-        if (ok) {
-            navigation.navigate('Tabs');
-        } else {
-            Alert.alert('Error', 'Llena todos los campos');
-        }
-    };
+    const handleRegister = async () => {
+    Alert.alert('Debug', `Registrando: ${nombre} | ${email} | ${password}`);
+    
+    if (!nombre || !email || !password) {
+        Alert.alert('Error', 'Llena todos los campos');
+        return;
+    }
+
+    const ok = await register(nombre, email, password);
+    if (!ok) {
+        Alert.alert('Error', 'No se pudo registrar');
+    }
+};
 
     return (
         <View style={styles.container}>

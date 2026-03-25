@@ -1,17 +1,15 @@
 import { useState } from "react";
-import { Text, StyleSheet, Alert, View, TouchableOpacity, ScrollView } from "react-native";
+import { Text, StyleSheet, Alert, View, TouchableOpacity, ScrollView, ActivityIndicator } from "react-native";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { GruposStackParamList } from "../navigation/TabsNavigator";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { agregarGasto, limpiarPagos } from "../store/slices/gastosSlice";
+import { agregarGastoAsync, limpiarPagos } from "../store/slices/gastosSlice";
+import { marcarSaldadoAsync } from "../store/slices/gruposSlice";
 import { useAuth } from "../context/AuthContext";
-import { Gasto } from "../types";
-import CustomInput from "../components/CustomInput";
-import CustomButton from "../components/CustomButton";
+import CustomInput     from "../components/CustomInput";
+import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
-import { resetearSaldado } from "../store/slices/gruposSlice";
-
 
 type Props = NativeStackScreenProps<GruposStackParamList, 'AgregarGasto'>;
 
@@ -19,19 +17,18 @@ export default function AgregarGastoScreen({ route, navigation }: Props) {
     const { grupoId } = route.params;
 
     const [descripcion, setDescripcion] = useState('');
-    const [monto, setMonto] = useState('');
-    const [pagadoPor, setPagadoPor] = useState('');
+    const [monto, setMonto]             = useState('');
+    const [pagadoPor, setPagadoPor]     = useState('');
+    const [loading, setLoading]         = useState(false);
 
-    // 1. instanciar dispatch
     const dispatch = useAppDispatch();
     const { user } = useAuth();
 
-    // obtener los miembros del grupo del store
     const grupo = useAppSelector((state) =>
         state.grupos.grupos.find((g) => g.id === grupoId)
     );
 
-    const handleGuardar = () => {
+    const handleGuardar = async () => {
         if (!descripcion || !monto) {
             Alert.alert('Error', 'Llena todos los campos');
             return;
@@ -40,21 +37,36 @@ export default function AgregarGastoScreen({ route, navigation }: Props) {
             Alert.alert('Error', '¿Quién pagó este gasto?');
             return;
         }
+        if (!user?.id) {
+            Alert.alert('Error', 'No hay sesión activa');
+            return;
+        }
 
-        const nuevoGasto: Gasto = {
-            id: Date.now().toString(),
-            grupoId,
-            descripcion,
-            monto: parseFloat(monto),
-            pagadoPor,
-            creadoEn: new Date().toISOString(),
-        };
+        setLoading(true);
+        try {
+            // Limpiar pagos y resetear saldado antes de guardar
+            dispatch(limpiarPagos(grupoId));
+            dispatch(marcarSaldadoAsync({ grupoId, saldado: false }));
 
-        // limpiar pagos anteriores y resetear saldado al agregar gasto nuevo
-        dispatch(limpiarPagos(grupoId));
-        dispatch(resetearSaldado(grupoId));
-        dispatch(agregarGasto(nuevoGasto));
-        navigation.goBack();
+            await dispatch(agregarGastoAsync({
+                gasto: {
+                    id: '',                          // Supabase genera el id real
+                    grupoId,
+                    descripcion,
+                    monto: parseFloat(monto),
+                    pagadoPor,
+                    divididoEntre: grupo?.miembros ?? [],
+                    creadoEn: new Date().toISOString(),
+                },
+                userId: user.id,
+            })).unwrap();
+
+            navigation.goBack();
+        } catch (error) {
+            Alert.alert('Error', 'No se pudo guardar el gasto');
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -75,7 +87,6 @@ export default function AgregarGastoScreen({ route, navigation }: Props) {
                     typeInput="number"
                 />
 
-                {/* Selector de quién pagó */}
                 <Text style={styles.label}>¿Quién pagó?</Text>
                 {grupo && grupo.miembros.length > 0 ? (
                     <View style={styles.miembrosRow}>
@@ -95,18 +106,21 @@ export default function AgregarGastoScreen({ route, navigation }: Props) {
                     <Text style={styles.sinMiembros}>No hay miembros en este grupo</Text>
                 )}
 
-                <CustomButton title="Guardar Gasto" onClick={handleGuardar} />
+                {loading
+                    ? <ActivityIndicator size="large" color="#2e4566" style={{ marginTop: 16 }} />
+                    : <CustomButton title="Guardar Gasto" onClick={handleGuardar} />
+                }
             </ScrollView>
         </ScreenContainer>
     );
 }
 
 const styles = StyleSheet.create({
-    label: { fontSize: 15, fontWeight: '600', color: '#555', marginBottom: 8 },
-    miembrosRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
-    chip: { backgroundColor: '#e8edf5', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1.5, borderColor: 'transparent' },
-    chipActivo: { backgroundColor: '#2e4566', borderColor: '#2e4566' },
-    chipText: { fontSize: 14, color: '#2e4566', fontWeight: '600' },
+    label:           { fontSize: 15, fontWeight: '600', color: '#555', marginBottom: 8 },
+    miembrosRow:     { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
+    chip:            { backgroundColor: '#e8edf5', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 8, borderWidth: 1.5, borderColor: 'transparent' },
+    chipActivo:      { backgroundColor: '#2e4566', borderColor: '#2e4566' },
+    chipText:        { fontSize: 14, color: '#2e4566', fontWeight: '600' },
     chipTextoActivo: { color: '#fff' },
-    sinMiembros: { fontSize: 14, color: '#888', marginBottom: 16 },
+    sinMiembros:     { fontSize: 14, color: '#888', marginBottom: 16 },
 });
