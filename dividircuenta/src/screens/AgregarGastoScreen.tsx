@@ -10,6 +10,8 @@ import { useAuth } from "../context/AuthContext";
 import CustomInput     from "../components/CustomInput";
 import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
+import { encolarActividad } from "../store/slices/actividadSlice"; // ← acción de la cola (queue)
+
 
 type Props = NativeStackScreenProps<GruposStackParamList, 'AgregarGasto'>;
 
@@ -60,6 +62,15 @@ export default function AgregarGastoScreen({ route, navigation }: Props) {
                 },
                 userId: user.id,
             })).unwrap();
+
+            // ── ENCOLAR ACTIVIDAD (estructura: COLA ) ─────────
+            // Cada vez que se agrega un gasto, se encola una nueva actividad con el mensaje correspondiente
+            dispatch(encolarActividad({
+                id: Date.now().toString(),
+                grupoId,
+                mensaje: `${pagadoPor} agregó "${descripcion}" por L ${monto}`,
+                fecha: new Date().toISOString(),
+            }));
 
             navigation.goBack();
         } catch (error) {
