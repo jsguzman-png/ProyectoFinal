@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { agregarGastoAsync, limpiarPagos } from "../store/slices/gastosSlice";
 import { marcarSaldadoAsync } from "../store/slices/gruposSlice";
 import { useAuth } from "../context/AuthContext";
+import { useTablaHash } from "../hooks/useTablaHash";
 import CustomInput     from "../components/CustomInput";
 import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
@@ -23,10 +24,8 @@ export default function AgregarGastoScreen({ route, navigation }: Props) {
 
     const dispatch = useAppDispatch();
     const { user } = useAuth();
-
-    const grupo = useAppSelector((state) =>
-        state.grupos.grupos.find((g) => g.id === grupoId)
-    );
+    const tablaHash = useTablaHash();
+    const grupo = tablaHash.buscar(grupoId);
 
     const handleGuardar = async () => {
         if (!descripcion || !monto) {

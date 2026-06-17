@@ -6,6 +6,7 @@ import { GruposStackParamList } from "../navigation/TabsNavigator";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { editarGastoAsync, eliminarGastoAsync } from "../store/slices/gastosSlice";
 import { Gasto } from "../types";
+import { useTablaHash } from "../hooks/useTablaHash";
 import CustomInput     from "../components/CustomInput";
 import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
@@ -18,9 +19,8 @@ export default function EditarGastoScreen({ route, navigation }: Props) {
     const gasto = useAppSelector((state) =>
         state.gastos.gastos.find((g) => g.id === gastoId)
     );
-    const grupo = useAppSelector((state) =>
-        state.grupos.grupos.find((g) => g.id === grupoId)
-    );
+    const tablaHash = useTablaHash();
+    const grupo = tablaHash.buscar(grupoId);
 
     const [descripcion, setDescripcion] = useState(gasto?.descripcion ?? '');
     const [monto, setMonto]             = useState(gasto?.monto.toString() ?? '');

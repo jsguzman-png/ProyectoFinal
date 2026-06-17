@@ -8,6 +8,7 @@ import { marcarSaldadoAsync } from "../store/slices/gruposSlice";  // ← cambio
 import { registrarPago } from "../store/slices/gastosSlice";
 import { cambiarMoneda, setTipoDeCambio } from "../store/slices/monedaSlice";
 import { obtenerTipoDeCambio } from "../services/exchangeService";
+import { useTablaHash } from "../hooks/useTablaHash";
 
 type Props = NativeStackScreenProps<GruposStackParamList, 'Saldos'>;
 
@@ -37,9 +38,8 @@ export default function SaldosScreen({ route }: Props) {
     };
     const simbolo = monedaActual === 'HNL' ? 'L' : '$';
 
-    const grupo = useAppSelector((state) =>
-        state.grupos.grupos.find((g) => g.id === grupoId)
-    );
+    const tablaHash = useTablaHash();
+    const grupo = tablaHash.buscar(grupoId);
     const gastos = useAppSelector((state) =>
         state.gastos.gastos.filter((g) => g.grupoId === grupoId)
     );

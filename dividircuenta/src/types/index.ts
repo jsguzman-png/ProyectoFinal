@@ -11,7 +11,7 @@ export type Grupo = {
     nombre: string;
     emoji: string;
     miembros: string[];
-    creadoPor?: string;   // ← opcional (?) porque Supabase no lo guarda
+    creadoPor?: string;   // ← opcional  porque Supabase no lo guarda
     saldado: boolean;
 };
 
@@ -23,7 +23,7 @@ export type Gasto = {
     monto: number;
     pagadoPor: string;
     divididoEntre: string[];  // ← agregado
-    creadoEn?: string;        // ← opcional (?) porque Supabase usa created_at
+    creadoEn?: string;        // ← opcional porque Supabase usa created_at
 };
 
 // tipo para un pago
