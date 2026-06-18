@@ -9,6 +9,7 @@ import { registrarPago } from "../store/slices/gastosSlice";
 import { cambiarMoneda, setTipoDeCambio } from "../store/slices/monedaSlice";
 import { obtenerTipoDeCambio } from "../services/exchangeService";
 import { useTablaHash } from "../hooks/useTablaHash";
+import { encolarActividad } from "../store/slices/actividadSlice";
 
 type Props = NativeStackScreenProps<GruposStackParamList, 'Saldos'>;
 
@@ -92,7 +93,7 @@ export default function SaldosScreen({ route }: Props) {
     const yaPago = (deudor: string, acreedor: string) =>
         pagosRealizados.some((p) => p.deudor === deudor && p.acreedor === acreedor);
 
-    const handleMarcarPago = (deudor: string, acreedor: string) => {
+    const handleMarcarPago = (deudor: string, acreedor: string, monto: number) => {
         Alert.alert(
             'Confirmar pago',
             `¿${deudor} ya le pagó a ${acreedor}?`,
@@ -100,8 +101,14 @@ export default function SaldosScreen({ route }: Props) {
                 { text: 'Cancelar', style: 'cancel' },
                 {
                     text: 'Sí, ya pagó',
-                    onPress: async () => {                              // ← async
+                    onPress: async () => {
                         dispatch(registrarPago({ deudor, acreedor, grupoId }));
+                        dispatch(encolarActividad({
+                            id: Date.now().toString(),
+                            grupoId,
+                            mensaje: `${deudor} pagó a ${acreedor} ${simbolo} ${convertir(monto)}`,
+                            fecha: new Date().toISOString(),
+                        }));
 
                         const pagosActualizados = [...pagosRealizados, { deudor, acreedor, grupoId }];
                         const todosSaldados = deudas.every((d) =>
@@ -208,7 +215,7 @@ export default function SaldosScreen({ route }: Props) {
                             ) : (
                                 <TouchableOpacity
                                     style={styles.pagarBtn}
-                                    onPress={() => handleMarcarPago(d.deudor, d.acreedor)}
+                                    onPress={() => handleMarcarPago(d.deudor, d.acreedor, d.monto)}
                                 >
                                     <Text style={styles.pagarBtnText}>Marcar pagado</Text>
                                 </TouchableOpacity>

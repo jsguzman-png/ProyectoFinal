@@ -32,3 +32,11 @@ export type Pago = {
     acreedor: string;
     grupoId: string;
 };
+
+// Estructura de datos para la actividad del grupo (Cola)
+export type Actividad = {
+    id: string;
+    grupoId: string;
+    mensaje: string;
+    fecha: string;
+};

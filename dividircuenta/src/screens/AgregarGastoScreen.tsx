@@ -3,9 +3,10 @@ import { Text, StyleSheet, Alert, View, TouchableOpacity, ScrollView, ActivityIn
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 import { GruposStackParamList } from "../navigation/TabsNavigator";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { useAppDispatch } from "../store/hooks";
 import { agregarGastoAsync, limpiarPagos } from "../store/slices/gastosSlice";
 import { marcarSaldadoAsync } from "../store/slices/gruposSlice";
+import { encolarActividad } from "../store/slices/actividadSlice";
 import { useAuth } from "../context/AuthContext";
 import { useTablaHash } from "../hooks/useTablaHash";
 import CustomInput     from "../components/CustomInput";
@@ -59,6 +60,13 @@ export default function AgregarGastoScreen({ route, navigation }: Props) {
                 },
                 userId: user.id,
             })).unwrap();
+
+            dispatch(encolarActividad({
+                id: Date.now().toString(),
+                grupoId,
+                mensaje: `${pagadoPor} agregó "${descripcion}" por L ${monto}`,
+                fecha: new Date().toISOString(),
+            }));
 
             navigation.goBack();
         } catch (error) {
