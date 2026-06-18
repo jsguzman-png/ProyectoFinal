@@ -17,18 +17,18 @@ export default function RegisterScreen({ navigation }: Props) {
     const { register } = useAuth();
 
     const handleRegister = async () => {
-    Alert.alert('Debug', `Registrando: ${nombre} | ${email} | ${password}`);
-    
-    if (!nombre || !email || !password) {
-        Alert.alert('Error', 'Llena todos los campos');
-        return;
-    }
+        Alert.alert('Debug', `Registrando: ${nombre} | ${email} | ${password}`);
+        
+        if (!nombre || !email || !password) {
+            Alert.alert('Error', 'Llena todos los campos');
+            return;
+        }
 
-    const ok = await register(nombre, email, password);
-    if (!ok) {
-        Alert.alert('Error', 'No se pudo registrar');
-    }
-};
+        const ok = await register(nombre, email, password);
+        if (!ok) {
+            Alert.alert('Error', 'No se pudo registrar');
+        }
+    };
 
     return (
         <View style={styles.container}>

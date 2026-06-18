@@ -9,6 +9,8 @@ import { fetchGastos } from "../store/slices/gastosSlice";
 import ExpenseCard     from "../components/ExpenseCard";
 import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
+import { useTablaHash } from "../hooks/useTablaHash";
+
 
 type Props = NativeStackScreenProps<GruposStackParamList, 'DetalleGrupo'>;
 
@@ -20,9 +22,8 @@ export default function DetalleGrupoScreen({ route, navigation }: Props) {
     const gastos  = useAppSelector((state) =>
         state.gastos.gastos.filter((g) => g.grupoId === grupoId)
     );
-    const grupo   = useAppSelector((state) =>
-        state.grupos.grupos.find((g) => g.id === grupoId)
-    );
+    const tablaHash = useTablaHash();
+    const grupo = tablaHash.buscar(grupoId);
     const loading = useAppSelector((state) => state.gastos.loading);
 
     // Cargar gastos desde Supabase al entrar a la pantalla

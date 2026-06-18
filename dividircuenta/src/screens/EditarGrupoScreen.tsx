@@ -5,6 +5,7 @@ import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { GruposStackParamList } from "../navigation/TabsNavigator";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { editarGrupoAsync, editarMiembrosAsync } from "../store/slices/gruposSlice";
+import { useTablaHash } from "../hooks/useTablaHash";
 import CustomInput     from "../components/CustomInput";
 import CustomButton    from "../components/CustomButton";
 import ScreenContainer from "../components/ScreenContainer";
@@ -14,9 +15,8 @@ type Props = NativeStackScreenProps<GruposStackParamList, 'EditarGrupo'>;
 export default function EditarGrupoScreen({ route, navigation }: Props) {
     const { grupoId } = route.params;
 
-    const grupo = useAppSelector((state) =>
-        state.grupos.grupos.find((g) => g.id === grupoId)
-    );
+    const tablaHash = useTablaHash();
+    const grupo = tablaHash.buscar(grupoId);
 
     const [nombre, setNombre]        = useState(grupo?.nombre ?? '');
     const [emoji, setEmoji]          = useState(grupo?.emoji ?? '');
